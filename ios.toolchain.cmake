@@ -115,6 +115,8 @@
 #    MAC_UNIVERSAL = x86_64 arm64
 #    MAC_CATALYST = x86_64
 #    MAC_CATALYST_ARM64 = arm64
+#    VISIONOS = arm64
+#    SIMULATOR_VISIONOS = x86_64
 #
 # NOTE: When manually specifying ARCHS, put a semi-colon between the entries. E.g., -DARCHS="armv7;arm64"
 #
@@ -157,7 +159,8 @@ list(APPEND _supported_platforms
         "TVOS" "TVOSCOMBINED" "SIMULATOR_TVOS"
         "WATCHOS" "WATCHOSCOMBINED" "SIMULATOR_WATCHOS"
         "MAC" "MAC_ARM64" "MAC_UNIVERSAL"
-        "MAC_CATALYST" "MAC_CATALYST_ARM64")
+        "MAC_CATALYST" "MAC_CATALYST_ARM64"
+        "VISIONOS" "SIMULATOR_VISIONOS")
 
 # Cache what generator is used
 set(USED_CMAKE_GENERATOR "${CMAKE_GENERATOR}")
@@ -266,6 +269,8 @@ if(NOT DEFINED DEPLOYMENT_TARGET)
   elseif(PLATFORM STREQUAL "MAC_CATALYST" OR PLATFORM STREQUAL "MAC_CATALYST_ARM64")
     # Unless specified, SDK version 13.0 is used by default as the minimum target version (mac catalyst minimum requirement).
     set(DEPLOYMENT_TARGET "13.1")
+  elseif(PLATFORM STREQUAL "VISIONOS" OR PLATFORM STREQUAL "SIMULATOR_VISIONOS")
+    set(DEPLOYMENT_TARGET "1.0")
   else()
     # Unless specified, SDK version 11.0 is used by default as the minimum target version (iOS, tvOS).
     set(DEPLOYMENT_TARGET "11.0")
@@ -395,6 +400,22 @@ elseif(PLATFORM_INT STREQUAL "SIMULATOR_TVOS")
     set(APPLE_TARGET_TRIPLE_INT x86_64-apple-tvos${DEPLOYMENT_TARGET}-simulator)
   else()
     set(APPLE_TARGET_TRIPLE_INT ${ARCHS_SPLIT}-apple-tvos${DEPLOYMENT_TARGET}-simulator)
+  endif()
+elseif(PLATFORM_INT STREQUAL "VISIONOS")
+  set(SDK_NAME xros)
+  if(NOT ARCHS)
+    set(ARCHS arm64)
+    set(APPLE_TARGET_TRIPLE_INT arm64-apple-xros${DEPLOYMENT_TARGET})
+  else()
+    set(APPLE_TARGET_TRIPLE_INT ${ARCHS_SPLIT}-apple-xros${DEPLOYMENT_TARGET})
+  endif()
+elseif(PLATFORM_INT STREQUAL "SIMULATOR_VISIONOS")
+  set(SDK_NAME xrsimulator)
+  if(NOT ARCHS)
+    set(ARCHS x86_64)
+    set(APPLE_TARGET_TRIPLE_INT x86_64-apple-xros${DEPLOYMENT_TARGET}-simulator)
+  else()
+    set(APPLE_TARGET_TRIPLE_INT ${ARCHS_SPLIT}-apple-xros${DEPLOYMENT_TARGET}-simulator)
   endif()
 elseif(PLATFORM_INT STREQUAL "WATCHOS")
   set(SDK_NAME watchos)
@@ -653,6 +674,8 @@ if(MODERN_CMAKE)
     set(CMAKE_SYSTEM_NAME tvOS)
   elseif(SDK_NAME MATCHES "watch")
     set(CMAKE_SYSTEM_NAME watchOS)
+  elseif(SDK_NAME MATCHES "xr")
+    set(CMAKE_SYSTEM_NAME visionOS)
   endif()
   # Provide flags for a combined FAT library build on newer CMake versions
   if(PLATFORM_INT MATCHES ".*COMBINED")
